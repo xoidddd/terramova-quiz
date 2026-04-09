@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TERRAMOVA QUIZ — Descubre tu destino</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Bebas+Neue&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #E8C97A;
+    --gold-dim: #7a6230;
+    --navy: #080C1A;
+    --navy-mid: #0D1428;
+    --navy-light: #151e35;
+    --white: #F5F0E8;
+    --white-dim: rgba(245,240,232,0.6);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--navy);
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .stars {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background: 
+      radial-gradient(ellipse at 20% 50%, rgba(201,168,76,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(13,20,40,0.8) 0%, transparent 50%);
+  }
+
+  .stars::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: 
+      radial-gradient(1px 1px at 10% 15%, rgba(201,168,76,0.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 25% 40%, rgba(245,240,232,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 50% 10%, rgba(201,168,76,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 70% 60%, rgba(245,240,232,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 85% 25%, rgba(201,168,76,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 35% 80%, rgba(245,240,232,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 90% 75%, rgba(201,168,76,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 60% 90%, rgba(245,240,232,0.4) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 45% 55%, rgba(201,168,76,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 15% 70%, rgba(245,240,232,0.3) 0%, transparent 100%);
+  }
+
+  /* SCREENS */
+  .screen {
+    display: none;
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+  }
+  .screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1.5rem; }
+
+  /* INTRO */
+  #screen-intro {
+    text-align: center;
+    gap: 1.5rem;
+  }
+
+  .logo-mark {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.4em;
+    color: var(--gold);
+    opacity: 0.8;
+    animation: fadeUp 0.8s ease both;
+  }
+
+  .intro-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2.8rem, 8vw, 5rem);
+    font-weight: 300;
+    line-height: 1;
+    animation: fadeUp 0.8s 0.2s ease both;
+  }
+
+  .intro-title em {
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  .intro-sub {
+    font-size: 0.85rem;
+    font-weight: 300;
+    color: var(--white-dim);
+    letter-spacing: 0.05em;
+    max-width: 280px;
+    line-height: 1.7;
+    animation: fadeUp 0.8s 0.4s ease both;
+  }
+
+  .gold-line {
+    width: 60px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    animation: fadeUp 0.8s 0.3s ease both;
+  }
+
+  .btn-primary {
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.3em;
+    padding: 1rem 2.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.8s 0.6s ease both;
+  }
+
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--gold);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+    z-index: -1;
+  }
+
+  .btn-primary:hover { color: var(--navy); }
+  .btn-primary:hover::before { transform: scaleX(1); }
+
+  /* QUIZ */
+  #screen-quiz {
+    gap: 2rem;
+    max-width: 480px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 2px;
+    background: rgba(201,168,76,0.15);
+    border-radius: 2px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+
+  .q-counter {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    color: var(--gold-dim);
+    text-align: center;
+  }
+
+  .q-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.6rem, 5vw, 2.2rem);
+    font-weight: 300;
+    text-align: center;
+    line-height: 1.3;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    width: 100%;
+    animation: fadeUp 0.4s 0.1s ease both;
+  }
+
+  .opt-btn {
+    background: var(--navy-light);
+    border: 1px solid rgba(201,168,76,0.2);
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 300;
+    padding: 1rem 0.75rem;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-align: center;
+    line-height: 1.4;
+    letter-spacing: 0.02em;
+  }
+
+  .opt-btn:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: rgba(201,168,76,0.06);
+    transform: translateY(-2px);
+  }
+
+  .opt-btn.selected {
+    border-color: var(--gold);
+    background: rgba(201,168,76,0.12);
+    color: var(--gold);
+  }
+
+  /* LOADING */
+  #screen-loading {
+    gap: 1.5rem;
+    text-align: center;
+  }
+
+  .loader-ring {
+    width: 60px;
+    height: 60px;
+    border: 1px solid rgba(201,168,76,0.15);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  .loading-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem;
+    font-weight: 300;
+    font-style: italic;
+    color: var(--white-dim);
+  }
+
+  /* RESULT / BOARDING PASS */
+  #screen-result {
+    gap: 1.5rem;
+    padding: 2rem 1rem;
+  }
+
+  .result-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.5em;
+    color: var(--gold-dim);
+    text-align: center;
+  }
+
+  /* BOARDING PASS */
+  .boarding-pass {
+    width: 100%;
+    max-width: 360px;
+    background: #0D1428;
+    border: 1px solid rgba(201,168,76,0.3);
+    position: relative;
+    overflow: hidden;
+    animation: scaleIn 0.6s ease both;
+    box-shadow: 0 0 60px rgba(201,168,76,0.08), 0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  .boarding-pass::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  .bp-header {
+    padding: 1.5rem 1.5rem 1rem;
+    border-bottom: 1px dashed rgba(201,168,76,0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .bp-airline {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+  }
+
+  .bp-airline span {
+    display: block;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.6rem;
+    font-weight: 300;
+    letter-spacing: 0.15em;
+    color: var(--white-dim);
+    margin-top: 2px;
+  }
+
+  .bp-type {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    color: var(--gold-dim);
+    text-align: right;
+  }
+
+  .bp-route {
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .bp-city {
+    text-align: center;
+    flex: 1;
+  }
+
+  .bp-code {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.2rem;
+    letter-spacing: 0.05em;
+    color: var(--white);
+    line-height: 1;
+  }
+
+  .bp-city-name {
+    font-size: 0.6rem;
+    font-weight: 300;
+    color: var(--white-dim);
+    letter-spacing: 0.1em;
+    margin-top: 2px;
+  }
+
+  .bp-arrow {
+    flex: 0;
+    color: var(--gold);
+    font-size: 1rem;
+    opacity: 0.7;
+    padding: 0 0.25rem;
+  }
+
+  .bp-dest-code {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.2rem;
+    color: var(--gold);
+    line-height: 1;
+  }
+
+  .bp-details {
+    padding: 0.75rem 1.5rem 1rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.75rem;
+    border-bottom: 1px dashed rgba(201,168,76,0.2);
+  }
+
+  .bp-detail-item label {
+    display: block;
+    font-size: 0.5rem;
+    letter-spacing: 0.2em;
+    color: var(--gold-dim);
+    margin-bottom: 3px;
+    text-transform: uppercase;
+  }
+
+  .bp-detail-item span {
+    font-size: 0.72rem;
+    font-weight: 400;
+    color: var(--white);
+    letter-spacing: 0.03em;
+  }
+
+  .bp-passenger {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px dashed rgba(201,168,76,0.2);
+  }
+
+  .bp-passenger label {
+    font-size: 0.5rem;
+    letter-spacing: 0.2em;
+    color: var(--gold-dim);
+    display: block;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+  }
+
+  .bp-passenger-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem;
+    font-weight: 300;
+    color: var(--white);
+    letter-spacing: 0.05em;
+  }
+
+  .bp-desc {
+    padding: 1rem 1.5rem;
+    font-size: 0.72rem;
+    font-weight: 300;
+    color: var(--white-dim);
+    line-height: 1.6;
+    font-style: italic;
+    border-bottom: 1px dashed rgba(201,168,76,0.2);
+  }
+
+  .bp-barcode {
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .barcode-lines {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+    height: 35px;
+  }
+
+  .barcode-lines span {
+    display: block;
+    background: var(--gold);
+    height: 100%;
+    opacity: 0.7;
+  }
+
+  .bp-terramova-badge {
+    text-align: right;
+  }
+
+  .bp-terramova-badge .badge-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.9rem;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+  }
+
+  .bp-terramova-badge .badge-sub {
+    font-size: 0.5rem;
+    color: var(--white-dim);
+    letter-spacing: 0.1em;
+  }
+
+  .bp-unlock {
+    display: inline-block;
+    font-size: 0.55rem;
+    letter-spacing: 0.15em;
+    color: var(--gold);
+    background: rgba(201,168,76,0.1);
+    border: 1px solid rgba(201,168,76,0.3);
+    padding: 0.25rem 0.5rem;
+    font-family: 'Inter', sans-serif;
+    margin-bottom: 0.5rem;
+  }
+
+  /* ACTION BUTTONS */
+  .action-row {
+    display: flex;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 360px;
+    animation: fadeUp 0.5s 0.3s ease both;
+  }
+
+  .btn-secondary {
+    flex: 1;
+    background: transparent;
+    border: 1px solid rgba(201,168,76,0.3);
+    color: var(--white-dim);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    padding: 0.85rem;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-transform: uppercase;
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  .btn-save {
+    flex: 1;
+    background: var(--gold);
+    border: 1px solid var(--gold);
+    color: var(--navy);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    padding: 0.85rem;
+    cursor: pointer;
+    transition: all 0.25s ease;
+  }
+
+  .btn-save:hover { background: var(--gold-light); }
+
+  /* NAME INPUT */
+  #screen-name {
+    gap: 2rem;
+    text-align: center;
+    max-width: 380px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .name-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.8rem, 6vw, 2.5rem);
+    font-weight: 300;
+    line-height: 1.2;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .name-title em { color: var(--gold); font-style: italic; }
+
+  .name-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(201,168,76,0.4);
+    color: var(--white);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.6rem;
+    font-weight: 300;
+    padding: 0.5rem 0;
+    text-align: center;
+    outline: none;
+    letter-spacing: 0.05em;
+    transition: border-color 0.3s;
+    animation: fadeUp 0.5s 0.2s ease both;
+  }
+
+  .name-input::placeholder { color: rgba(245,240,232,0.2); }
+  .name-input:focus { border-bottom-color: var(--gold); }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.92); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+</style>
+</head>
+<body>
+<div class="stars"></div>
+
+<!-- INTRO -->
+<div class="screen active" id="screen-intro">
+  <p class="logo-mark">TERRAMOVA QUIZ</p>
+  <h1 class="intro-title">Descubre tu<br><em>próximo destino</em></h1>
+  <div class="gold-line"></div>
+  <p class="intro-sub">Responde 8 preguntas y te decimos a qué rincón de México perteneces.</p>
+  <button class="btn-primary" onclick="startQuiz()">COMENZAR</button>
+</div>
+
+<!-- NOMBRE -->
+<div class="screen" id="screen-name">
+  <p class="logo-mark">TERRAMOVA</p>
+  <h2 class="name-title">¿Cómo te<br><em>llamamos, viajero?</em></h2>
+  <input class="name-input" id="name-input" type="text" placeholder="Tu nombre" maxlength="24" />
+  <button class="btn-primary" onclick="submitName()" style="animation-delay:0.4s">CONTINUAR →</button>
+</div>
+
+<!-- QUIZ -->
+<div class="screen" id="screen-quiz">
+  <div style="width:100%;display:flex;flex-direction:column;gap:0.5rem">
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    <p class="q-counter" id="q-counter"></p>
+  </div>
+  <h2 class="q-text" id="q-text"></h2>
+  <div class="options-grid" id="options-grid"></div>
+</div>
+
+<!-- LOADING -->
+<div class="screen" id="screen-loading">
+  <div class="loader-ring"></div>
+  <p class="loading-text">Buscando tu destino ideal…</p>
+</div>
+
+<!-- RESULT -->
+<div class="screen" id="screen-result">
+  <p class="result-label">— DESTINO DESBLOQUEADO —</p>
+  <div class="boarding-pass" id="boarding-pass">
+    <div class="bp-header">
+      <div>
+        <div class="bp-unlock">BOARDING PASS</div>
+        <div class="bp-airline">TERRAMOVA<span>Líneas de Aventura</span></div>
+      </div>
+      <div class="bp-type">VIAJERO<br>CLASE EXPLORER</div>
+    </div>
+    <div class="bp-route">
+      <div class="bp-city">
+        <div class="bp-code">TIJ</div>
+        <div class="bp-city-name">ORIGEN</div>
+      </div>
+      <div class="bp-arrow">—</div>
+      <div class="bp-city" style="text-align:right">
+        <div class="bp-dest-code" id="bp-code"></div>
+        <div class="bp-city-name" id="bp-city-name"></div>
+      </div>
+    </div>
+    <div class="bp-details">
+      <div class="bp-detail-item">
+        <label>Vuelo</label>
+        <span id="bp-flight">TMV-001</span>
+      </div>
+      <div class="bp-detail-item">
+        <label>Fecha</label>
+        <span id="bp-date"></span>
+      </div>
+      <div class="bp-detail-item">
+        <label>Asiento</label>
+        <span id="bp-seat"></span>
+      </div>
+    </div>
+    <div class="bp-passenger">
+      <label>Pasajero</label>
+      <div class="bp-passenger-name" id="bp-name"></div>
+    </div>
+    <div class="bp-desc" id="bp-desc"></div>
+    <div class="bp-barcode">
+      <div class="barcode-lines" id="barcode"></div>
+      <div class="bp-terramova-badge">
+        <div class="badge-logo">TERRAMOVA</div>
+        <div class="badge-sub">terramova.byethost5.com</div>
+      </div>
+    </div>
+  </div>
+  <div class="action-row">
+    <button class="btn-secondary" onclick="restart()">← REPETIR</button>
+  </div>
+</div>
+
+<script>
+const questions = [
+  {
+    text: "¿Cómo es tu viaje ideal?",
+    options: ["Playa y sol", "Ciudad y cultura", "Naturaleza salvaje", "Lujo y relax"]
+  },
+  {
+    text: "¿Con quién viajas?",
+    options: ["Solo / sola", "En pareja", "Con amigos", "En familia"]
+  },
+  {
+    text: "¿Qué no puede faltar en tu viaje?",
+    options: ["Buena comida", "Vida nocturna", "Fotografías épicas", "Aventura extrema"]
+  },
+  {
+    text: "¿Cuánto tiempo tienes?",
+    options: ["Un fin de semana", "Una semana", "Dos semanas", "Sin límite"]
+  },
+  {
+    text: "¿Qué clima prefieres?",
+    options: ["Calor tropical", "Clima fresco", "Templado perfecto", "Me da igual"]
+  },
+  {
+    text: "¿Cuál es tu estilo de alojamiento?",
+    options: ["Hotel boutique", "Resort todo incluido", "Cabaña en la naturaleza", "Airbnb local"]
+  },
+  {
+    text: "¿Qué actividad no te perdería?",
+    options: ["Bucear o snorkel", "Recorrer museos", "Senderismo", "Nadar en cenote"]
+  },
+  {
+    text: "¿Cuál es tu vibe de viaje?",
+    options: ["Desconectarme del mundo", "Vivir intensamente", "Descubrir lo auténtico", "Mezcla de todo"]
+  }
+];
+
+const destinations = [
+  {
+    name: "Cancún", code: "CUN",
+    desc: "Mar turquesa, arena blanca y noches que no terminan. Cancún es pura energía y libertad.",
+    tags: ["playa","calor","nocturna","amigos","resort"]
+  },
+  {
+    name: "Tulum", code: "TUL",
+    desc: "Cenotes cristalinos, ruinas mayas y un ambiente que mezcla la aventura con la paz interior.",
+    tags: ["playa","naturaleza","fotos","pareja","cenote","autentico"]
+  },
+  {
+    name: "Ciudad de México", code: "CDMX",
+    desc: "La ciudad más vibrante de México. Arte, gastronomía, historia y vida nocturna sin igual.",
+    tags: ["ciudad","cultura","comida","museos","nocturna"]
+  },
+  {
+    name: "Oaxaca", code: "OAX",
+    desc: "Mole negro, mezcal y artesanías únicas. Oaxaca es el alma auténtica de México.",
+    tags: ["cultura","comida","autentico","fotos","templado"]
+  },
+  {
+    name: "Los Cabos", code: "SJD",
+    desc: "Donde el desierto se funde con el mar. Lujo, aventura y atardeceres de otro mundo.",
+    tags: ["lujo","playa","pareja","calor","aventura"]
+  },
+  {
+    name: "Guanajuato", code: "GTO",
+    desc: "Callejones de colores, leyendas y una magia colonial que te roba el corazón.",
+    tags: ["ciudad","cultura","pareja","fotos","templado","autentico"]
+  },
+  {
+    name: "Holbox", code: "HBX",
+    desc: "Sin autos, sin prisa. Holbox es el paraíso para quien busca desconectarse de verdad.",
+    tags: ["playa","desconectar","naturaleza","calor","pareja"]
+  },
+  {
+    name: "San Cristóbal", code: "SZT",
+    desc: "Aire fresco, mercados de colores y una esencia indígena que no encontrarás en otro lugar.",
+    tags: ["frio","autentico","cultura","naturaleza","solo"]
+  },
+  {
+    name: "Puerto Vallarta", code: "PVR",
+    desc: "Playa y montaña en un mismo lugar. Arte, gastronomía y gente que te hace sentir en casa.",
+    tags: ["playa","cultura","comida","familia","templado"]
+  },
+  {
+    name: "Bacalar", code: "BCL",
+    desc: "La laguna de los 7 colores. Aguas que parecen pintadas, kayak y silencio absoluto.",
+    tags: ["naturaleza","desconectar","pareja","fotos","cenote","calor"]
+  },
+  {
+    name: "Mazatlán", code: "MZT",
+    desc: "El malecón más largo de México, ceviche de altura y un carnaval que no para.",
+    tags: ["playa","calor","nocturna","amigos","comida","familia"]
+  },
+  {
+    name: "Mérida", code: "MID",
+    desc: "La ciudad blanca del sureste. Haciendas coloniales, cochinita pibil y cenotes a minutos.",
+    tags: ["ciudad","cultura","comida","historia","calor","autentico"]
+  },
+  {
+    name: "Puebla", code: "PBC",
+    desc: "Talavera, chiles en nogada y una arquitectura barroca que te deja sin palabras.",
+    tags: ["ciudad","cultura","comida","historia","templado","autentico"]
+  },
+  {
+    name: "Morelia", code: "MLM",
+    desc: "Cantera rosa, tradición viva y una tranquilidad que pocas ciudades ofrecen.",
+    tags: ["ciudad","cultura","historia","templado","pareja","autentico"]
+  },
+  {
+    name: "Zipolite", code: "ZIP",
+    desc: "La playa más libre de México. Sin reglas, con hamacas, mezcal y atardeceres eternos.",
+    tags: ["playa","desconectar","solo","calor","autentico","aventura"]
+  },
+  {
+    name: "Real de Catorce", code: "RDC",
+    desc: "Un pueblo fantasma en el desierto. Misticismo, caballos y cielos estrellados únicos.",
+    tags: ["desconectar","autentico","solo","pareja","frio","historia"]
+  },
+  {
+    name: "Xcalak", code: "XCL",
+    desc: "El último paraíso sin masificar del Caribe mexicano. Arrecifes vírgenes y total paz.",
+    tags: ["playa","naturaleza","desconectar","buceo","calor","pareja"]
+  },
+  {
+    name: "Creel y Barrancas", code: "CUU",
+    desc: "El Copper Canyon: barrancas más grandes que el Grand Canyon y trenes que cruzan la sierra.",
+    tags: ["naturaleza","aventura","frio","solo","fotos","senderismo"]
+  },
+  {
+    name: "Huatulco", code: "HUX",
+    desc: "Nueve bahías de aguas turquesas con arrecifes de coral y un ambiente relajado y auténtico.",
+    tags: ["playa","calor","pareja","naturaleza","buceo","relax","lujo"]
+  }
+];
+
+let answers = [];
+let currentQ = 0;
+let userName = "";
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startQuiz() {
+  showScreen('screen-name');
+}
+
+function submitName() {
+  const val = document.getElementById('name-input').value.trim();
+  userName = val || "Viajero";
+  answers = [];
+  currentQ = 0;
+  showScreen('screen-quiz');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = questions[currentQ];
+  const total = questions.length;
+  document.getElementById('progress-fill').style.width = ((currentQ / total) * 100) + '%';
+  document.getElementById('q-counter').textContent = `${currentQ + 1} / ${total}`;
+  document.getElementById('q-text').textContent = q.text;
+
+  const grid = document.getElementById('options-grid');
+  grid.innerHTML = '';
+  // re-trigger animation
+  grid.style.animation = 'none';
+  grid.offsetHeight;
+  grid.style.animation = '';
+
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.textContent = opt;
+    btn.onclick = () => selectOption(i, opt, btn);
+    grid.appendChild(btn);
+  });
+}
+
+function selectOption(i, text, btn) {
+  document.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  answers.push(text.toLowerCase());
+
+  setTimeout(() => {
+    currentQ++;
+    if (currentQ < questions.length) {
+      renderQuestion();
+    } else {
+      showScreen('screen-loading');
+      setTimeout(showResult, 2200);
+    }
+  }, 350);
+}
+
+function showResult() {
+  const dest = calcDestination();
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('es-MX', { day:'2-digit', month:'short', year:'2-digit' }).toUpperCase();
+  const seats = ['12A','7C','3F','21B','15D','9A','4C','18F'];
+  const seat = seats[Math.floor(Math.random() * seats.length)];
+  const flights = ['TMV-'+String(Math.floor(Math.random()*900)+100)];
+
+  document.getElementById('bp-code').textContent = dest.code;
+  document.getElementById('bp-city-name').textContent = dest.name.toUpperCase();
+  document.getElementById('bp-name').textContent = userName.toUpperCase();
+  document.getElementById('bp-desc').textContent = dest.desc;
+  document.getElementById('bp-date').textContent = dateStr;
+  document.getElementById('bp-seat').textContent = seat;
+  document.getElementById('bp-flight').textContent = flights[0];
+
+  // Generate barcode visual
+  const bc = document.getElementById('barcode');
+  bc.innerHTML = '';
+  const widths = [2,3,1,4,2,1,3,2,4,1,2,3,1,2,4,3,1,2,1,3,2,4,1,3,2,1];
+  widths.forEach(w => {
+    const s = document.createElement('span');
+    s.style.width = w + 'px';
+    bc.appendChild(s);
+  });
+
+  showScreen('screen-result');
+}
+
+function calcDestination() {
+  const scores = destinations.map(d => ({ dest: d, score: 0 }));
+  const allText = answers.join(' ');
+
+  scores.forEach(s => {
+    s.dest.tags.forEach(tag => {
+      if (allText.includes(tag)) s.score++;
+    });
+  });
+
+  // Add some randomness so not always the same
+  scores.forEach(s => s.score += Math.random() * 0.8);
+  scores.sort((a, b) => b.score - a.score);
+  return scores[0].dest;
+}
+
+function savePass() {
+  if (typeof html2canvas !== 'undefined') {
+    const bp = document.getElementById('boarding-pass');
+    document.fonts.ready.then(() => {
+      html2canvas(bp, {
+        backgroundColor: null,
+        scale: 3,
+        useCORS: true,
+        allowTaint: true,
+        logging: false
+      }).then(bpCanvas => {
+        const pad = 60;
+        const final = document.createElement('canvas');
+        final.width = bpCanvas.width + pad * 2;
+        final.height = bpCanvas.height + pad * 2;
+        const ctx = final.getContext('2d');
+        ctx.fillStyle = '#080C1A';
+        ctx.fillRect(0, 0, final.width, final.height);
+        ctx.strokeStyle = 'rgba(201,168,76,0.4)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(pad * 0.4, pad * 0.4, final.width - pad * 0.8, final.height - pad * 0.8);
+        ctx.drawImage(bpCanvas, pad, pad);
+        const link = document.createElement('a');
+        link.download = 'mi-destino-terramova.png';
+        link.href = final.toDataURL('image/png');
+        link.click();
+      });
+    });
+  } else {
+    alert('Toma una captura de pantalla para guardar tu boarding pass y súbela a tus stories con #TERRAMOVA');
+  }
+}
+
+function restart() {
+  answers = [];
+  currentQ = 0;
+  document.getElementById('name-input').value = '';
+  showScreen('screen-intro');
+}
+
+// Set today's date
+document.getElementById('bp-date') && (document.getElementById('bp-date').textContent = new Date().toLocaleDateString('es-MX'));
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</body>
+</html>
